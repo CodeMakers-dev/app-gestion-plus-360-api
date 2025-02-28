@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: gestion-plus-api
+  gestion:
+    datasource:
+      url: jdbc:postgresql://localhost:5432/bd_gestion_plus
+      username: postgres
+      password: pasword
+      driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+      show-sql: true
+      format-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    packages-to-scan:
+      - com.gestion.plus.commons.entities
+  logging:
+    level:
+      org.hibernate.SQL: DEBUG
+      org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+      org.springframework.orm.jpa: DEBUG
+  mail:
+    host: smtp.gmail.com 
+    port: 587             
+    username: miloome2811@gmail.com 
+    password: yksy qgit lqlz gsaw
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+seguridad:
+  llave: keygestionplus
+jwt:
+  secret: L5u9mC4Qp7FJ8rXz2VpYhTtNbKwA1gD0sO3fG6ZRMIlEjcYdPoUWxvqBaHN7SKCaMnuELmasdjUENNAJSN
+app:
+  url:
+    reset-password: http://localhost:8080/reset-password
