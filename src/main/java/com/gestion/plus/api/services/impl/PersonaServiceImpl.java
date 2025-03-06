@@ -27,6 +27,7 @@ import com.gestion.plus.commons.repositories.UsuarioRepository;
 import com.gestion.plus.commons.repositories.VigenciaUsuarioRepository;
 import com.gestion.plus.commons.utils.ResponseMessages;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -177,7 +178,8 @@ public class PersonaServiceImpl implements IPersonaService {
 					.body(new ResponseDTO(false, "Error al actualizar persona", HttpStatus.BAD_REQUEST.value(), null));
 		}
 	}
-
+	
+    @Transactional
 	public ResponseEntity<ResponseDTO> deletePersona(Integer id) {
 		log.info("Inicio método eliminar persona");
 

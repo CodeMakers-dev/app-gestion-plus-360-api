@@ -7,9 +7,9 @@ import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfig
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
-@EnableAutoConfiguration(exclude = {JpaRepositoriesAutoConfiguration.class})
-@EntityScan(basePackages = {"com.gestion.plus.commons"})
+@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })
+@EnableAutoConfiguration(exclude = { JpaRepositoriesAutoConfiguration.class })
+@EntityScan(basePackages = { "com.gestion.plus.commons" })
 public class GestionPlusApiApplication {
 
 	public static void main(String[] args) {

@@ -10,5 +10,7 @@ public interface IUsuarioService {
 	ResponseEntity<ResponseDTO> saveUsuario(UsuarioDTO usuarioDTO);
 	
 	ResponseEntity<ResponseDTO> updatePassword(UsuarioDTO usuarioDTO);
+	
+	ResponseEntity<ResponseDTO> findUsuarioById(Integer Id);
 
 }

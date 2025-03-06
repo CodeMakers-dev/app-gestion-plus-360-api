@@ -1,6 +1,7 @@
 package com.gestion.plus.api.services.impl;
 
 import java.util.Date;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -105,6 +106,21 @@ public class UsuarioServiceImpl implements IUsuarioService {
 	                    .build()
 	            );
 	        });
+	}
+	
+	public ResponseEntity<ResponseDTO> findUsuarioById(Integer id) {
+		ResponseDTO responseDTO;
+		log.info("Inicio del metodo para obtener los Usuarios por id");
+		Optional<UsuarioEntity> usuarioOptional = this.usuarioRepository.findById(id);
+		if (usuarioOptional.isPresent()) {
+			UsuarioDTO usuarioDTO = UsuarioMapper.INSTANCE.entityToDto(usuarioOptional.get());
+			responseDTO = ResponseDTO.builder().success(Boolean.valueOf(true)).message(ResponseMessages.CONSULTED_SUCCESSFULLY)
+					.code(Integer.valueOf(HttpStatus.OK.value())).response(usuarioDTO).build();
+		} else {
+			responseDTO = ResponseDTO.builder().code(Integer.valueOf(HttpStatus.NOT_FOUND.value()))
+					.message("usuario no encontrado para el Id: " + id).response(null).build();
+		}
+		return ResponseEntity.status(responseDTO.getCode().intValue()).body(responseDTO);
 	}
 
 }

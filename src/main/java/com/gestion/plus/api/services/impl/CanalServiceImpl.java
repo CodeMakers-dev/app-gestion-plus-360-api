@@ -80,9 +80,11 @@ public class CanalServiceImpl implements ICanalService {
 		ResponseDTO responseDTO;
 		CanalEntity existingCanal = this.canalRepository.findById(id).orElse(null);
 		if (existingCanal != null) {
-			existingCanal.setNombre((canalDTO.getNombre() != null) ? canalDTO.getNombre() : existingCanal.getNombre());
+			existingCanal.setNombre((canalDTO.getNombre() != null) ? 
+				 canalDTO.getNombre() : existingCanal.getNombre());
 			existingCanal.setDescripcion(
-					(canalDTO.getDescripcion() != null) ? canalDTO.getDescripcion() : existingCanal.getNombre());
+					(canalDTO.getDescripcion() != null) ? 
+					canalDTO.getDescripcion() : existingCanal.getNombre());
 			existingCanal.setActivo((canalDTO.getActivo() != null) ? canalDTO.getActivo() : existingCanal.getActivo());
 			CanalDTO canalDTOR = CanalMapper.INSTANCE
 					.entityToDto((CanalEntity) this.canalRepository.save(existingCanal));
