@@ -65,42 +65,66 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
 	public ResponseEntity<ResponseDTO> updatePassword(String token, UsuarioDTO usuarioDTO) {
 		log.info("Inicio método actualizar contraseña con token para usuario ID: {}", usuarioDTO.getId());
+
 		if (token == null || token.trim().isEmpty()) {
 			log.warn("Token de recuperación no proporcionado");
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseDTO.builder().success(false)
 					.message("Token de recuperación es obligatorio").code(HttpStatus.UNAUTHORIZED.value()).build());
 		}
+
+		if (jwtTokenUtil.isTokenInvalid(token)) {
+			log.warn("Token inválido");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseDTO.builder().success(false)
+					.message("Token inválido o ya usado").code(HttpStatus.UNAUTHORIZED.value()).build());
+		}
+
 		String usuario = jwtTokenUtil.getUsernameFromToken(token);
 		if (usuario == null) {
 			log.warn("Token inválido o expirado");
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseDTO.builder().success(false)
 					.message("Token inválido o expirado").code(HttpStatus.UNAUTHORIZED.value()).build());
 		}
+
 		return usuarioRepository.findByUsuario(usuario).map(usuarioEntity -> {
-			if (usuarioDTO.getPassword() == null || usuarioDTO.getPassword().trim().isEmpty()) {
-				log.warn("Contraseña inválida para usuario: {}", usuario);
-				return ResponseEntity.badRequest().body(ResponseDTO.builder().success(false)
-						.message("La contraseña no puede estar vacía").code(HttpStatus.BAD_REQUEST.value()).build());
+			String nuevaPassword = usuarioDTO.getPassword();
+
+			if (!validarPassword(nuevaPassword)) {
+				log.warn("La nueva contraseña no cumple con los requisitos de seguridad para usuario: {}", usuario);
+				return ResponseEntity.badRequest().body(ResponseDTO.builder().success(false).message(
+						"La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (@#$%^&+=!)")
+						.code(HttpStatus.BAD_REQUEST.value()).build());
 			}
-			if (passwordEncoder.matches(usuarioDTO.getPassword(), usuarioEntity.getPassword())) {
+
+			if (passwordEncoder.matches(nuevaPassword, usuarioEntity.getPassword())) {
 				log.warn("La nueva contraseña no puede ser igual a la actual para usuario: {}", usuario);
 				return ResponseEntity.badRequest()
 						.body(ResponseDTO.builder().success(false)
 								.message("La nueva contraseña debe ser diferente a la actual")
 								.code(HttpStatus.BAD_REQUEST.value()).build());
 			}
-			usuarioEntity.setPassword(passwordEncoder.encode(usuarioDTO.getPassword()));
+			usuarioEntity.setPassword(passwordEncoder.encode(nuevaPassword));
 			usuarioEntity.setFechaModificacion(new Date());
 			usuarioRepository.save(usuarioEntity);
 
+			jwtTokenUtil.invalidateToken(token);
+
 			log.info("Contraseña actualizada correctamente para usuario: {}", usuario);
-			return ResponseEntity.ok(ResponseDTO.builder().success(true).message("Contraseña actualizada correctamente")
+			return ResponseEntity.ok(ResponseDTO.builder().success(true)
+					.message("Contraseña actualizada correctamente. Inicia sesión nuevamente.")
 					.code(HttpStatus.OK.value()).build());
 		}).orElseGet(() -> {
 			log.error("Usuario no encontrado con username: {}", usuario);
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder().success(false)
 					.message("Usuario no encontrado").code(HttpStatus.NOT_FOUND.value()).build());
 		});
+	}
+
+	/**
+	 * Valida que la contraseña cumpla con los criterios de seguridad.
+	 */
+	private boolean validarPassword(String password) {
+		return password != null && password.length() >= 8 && password.matches(".*[A-Z].*")
+				&& password.matches(".*[a-z].*") && password.matches(".*\\d.*") && password.matches(".*[@#$%^&+=!].*");
 	}
 
 	public ResponseEntity<ResponseDTO> findUsuarioById(Integer id) {
@@ -163,20 +187,22 @@ public class UsuarioServiceImpl implements IUsuarioService {
 						HttpStatus.OK.value()),
 				HttpStatus.OK);
 	}
-	
+
 	public ResponseEntity<ResponseDTO> editPassword(UsuarioDTO usuarioDTO) {
 		log.info("Inicio método actualizar contraseña para usuario ID: {}", usuarioDTO.getId());
 
-		if (usuarioDTO.getPassword() == null || usuarioDTO.getPassword().trim().isEmpty()) {
-			log.warn("Contraseña inválida para usuario ID: {}", usuarioDTO.getId());
-			return ResponseEntity.badRequest().body(ResponseDTO.builder().success(false)
-					.message("La contraseña no puede estar vacía").code(HttpStatus.BAD_REQUEST.value()).build());
+		String nuevaPassword = usuarioDTO.getPassword();
+
+		if (!validarPassword(nuevaPassword)) {
+			log.warn("La nueva contraseña no cumple con los requisitos de seguridad para usuario ID: {}",
+					usuarioDTO.getId());
+			return ResponseEntity.badRequest().body(ResponseDTO.builder().success(false).message(
+					"La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (@#$%^&+=!)")
+					.code(HttpStatus.BAD_REQUEST.value()).build());
 		}
 
 		return usuarioRepository.findById(usuarioDTO.getId()).map(usuario -> {
-			String hashedPassword = passwordEncoder.encode(usuarioDTO.getPassword());
-
-			if (passwordEncoder.matches(usuarioDTO.getPassword(), usuario.getPassword())) {
+			if (passwordEncoder.matches(nuevaPassword, usuario.getPassword())) {
 				log.warn("La nueva contraseña no puede ser igual a la actual para usuario ID: {}", usuarioDTO.getId());
 				return ResponseEntity.badRequest()
 						.body(ResponseDTO.builder().success(false)
@@ -184,7 +210,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 								.code(HttpStatus.BAD_REQUEST.value()).build());
 			}
 
-			usuario.setPassword(hashedPassword);
+			usuario.setPassword(passwordEncoder.encode(nuevaPassword));
 			usuario.setFechaModificacion(new Date());
 			usuarioRepository.save(usuario);
 
