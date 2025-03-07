@@ -9,8 +9,12 @@ public interface IUsuarioService {
 	
 	ResponseEntity<ResponseDTO> saveUsuario(UsuarioDTO usuarioDTO);
 	
-	ResponseEntity<ResponseDTO> updatePassword(UsuarioDTO usuarioDTO);
+	ResponseEntity<ResponseDTO> updatePassword(String token, UsuarioDTO usuarioDTO);
+	
+	ResponseEntity<ResponseDTO> editPassword(UsuarioDTO usuarioDTO);
 	
 	ResponseEntity<ResponseDTO> findUsuarioById(Integer Id);
+	
+	ResponseEntity<ResponseDTO> recoverPassword(String usuario);
 
 }
