@@ -18,6 +18,7 @@ import com.gestion.plus.commons.dtos.UsuarioDTO;
 import com.gestion.plus.commons.entities.UsuarioEntity;
 import com.gestion.plus.commons.maps.UsuarioMapper;
 import com.gestion.plus.commons.repositories.UsuarioRepository;
+import com.gestion.plus.commons.utils.Constantes;
 import com.gestion.plus.commons.utils.ResponseMessages;
 import com.gestion.plus.commons.utils.Utils;
 
@@ -56,7 +57,6 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
 		} catch (Exception e) {
-			log.error("Error al guardar usuario", e);
 			ResponseDTO errorResponse = ResponseDTO.builder().success(false).message(ResponseMessages.SAVE_ERROR)
 					.code(HttpStatus.BAD_REQUEST.value()).build();
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
@@ -67,39 +67,36 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		log.info("Inicio método actualizar contraseña con token para usuario ID: {}", usuarioDTO.getId());
 
 		if (token == null || token.trim().isEmpty()) {
-			log.warn("Token de recuperación no proporcionado");
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseDTO.builder().success(false)
-					.message("Token de recuperación es obligatorio").code(HttpStatus.UNAUTHORIZED.value()).build());
+					.message(ResponseMessages.TOKEN_REQUIRED).code(HttpStatus.UNAUTHORIZED.value()).build());
 		}
 
 		if (jwtTokenUtil.isTokenInvalid(token)) {
-			log.warn("Token inválido");
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseDTO.builder().success(false)
-					.message("Token inválido o ya usado").code(HttpStatus.UNAUTHORIZED.value()).build());
+					.message(ResponseMessages.TOKEN_INVALID).code(HttpStatus.UNAUTHORIZED.value()).build());
 		}
 
 		String usuario = jwtTokenUtil.getUsernameFromToken(token);
 		if (usuario == null) {
-			log.warn("Token inválido o expirado");
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseDTO.builder().success(false)
-					.message("Token inválido o expirado").code(HttpStatus.UNAUTHORIZED.value()).build());
+					.message(ResponseMessages.TOKEN_EXPIRED).code(HttpStatus.UNAUTHORIZED.value()).build());
 		}
 
 		return usuarioRepository.findByUsuario(usuario).map(usuarioEntity -> {
 			String nuevaPassword = usuarioDTO.getPassword();
 
 			if (!validarPassword(nuevaPassword)) {
-				log.warn("La nueva contraseña no cumple con los requisitos de seguridad para usuario: {}", usuario);
+				
 				return ResponseEntity.badRequest().body(ResponseDTO.builder().success(false).message(
-						"La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (@#$%^&+=!)")
+						ResponseMessages.SPECIAL_CHARACTERS)
 						.code(HttpStatus.BAD_REQUEST.value()).build());
 			}
 
 			if (passwordEncoder.matches(nuevaPassword, usuarioEntity.getPassword())) {
-				log.warn("La nueva contraseña no puede ser igual a la actual para usuario: {}", usuario);
+				
 				return ResponseEntity.badRequest()
 						.body(ResponseDTO.builder().success(false)
-								.message("La nueva contraseña debe ser diferente a la actual")
+								.message(ResponseMessages.PASSWORD_DIFFERENT)
 								.code(HttpStatus.BAD_REQUEST.value()).build());
 			}
 			usuarioEntity.setPassword(passwordEncoder.encode(nuevaPassword));
@@ -107,21 +104,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
 			usuarioRepository.save(usuarioEntity);
 
 			jwtTokenUtil.invalidateToken(token);
-
-			log.info("Contraseña actualizada correctamente para usuario: {}", usuario);
 			return ResponseEntity.ok(ResponseDTO.builder().success(true)
-					.message("Contraseña actualizada correctamente. Inicia sesión nuevamente.")
+					.message(ResponseMessages.PASSWORD_SUCCESSFULLY)
 					.code(HttpStatus.OK.value()).build());
 		}).orElseGet(() -> {
-			log.error("Usuario no encontrado con username: {}", usuario);
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder().success(false)
-					.message("Usuario no encontrado").code(HttpStatus.NOT_FOUND.value()).build());
+					.message(Constantes.USER_NOT_FOUND).code(HttpStatus.NOT_FOUND.value()).build());
 		});
 	}
 
-	/**
-	 * Valida que la contraseña cumpla con los criterios de seguridad.
-	 */
 	private boolean validarPassword(String password) {
 		return password != null && password.length() >= 8 && password.matches(".*[A-Z].*")
 				&& password.matches(".*[a-z].*") && password.matches(".*\\d.*") && password.matches(".*[@#$%^&+=!].*");
@@ -148,7 +139,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
 		if (usuario == null || usuario.isEmpty()) {
 			return new ResponseEntity<>(
-					Utils.mapearRespuesta("El usuario es obligatorio", HttpStatus.BAD_REQUEST.value()),
+					Utils.mapearRespuesta(ResponseMessages.USER_REQUIRED, HttpStatus.BAD_REQUEST.value()),
 					HttpStatus.BAD_REQUEST);
 		}
 
@@ -156,16 +147,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
 		if (!usuarioOpt.isPresent()) {
 			log.warn("Usuario no encontrado: {}", usuario);
-			return new ResponseEntity<>(Utils.mapearRespuesta("Usuario no encontrado", HttpStatus.NOT_FOUND.value()),
+			return new ResponseEntity<>(Utils.mapearRespuesta(Constantes.USER_NOT_FOUND, HttpStatus.NOT_FOUND.value()),
 					HttpStatus.NOT_FOUND);
 		}
 
 		UsuarioEntity usuarioEntity = usuarioOpt.get();
 
 		if (!Boolean.TRUE.equals(usuarioEntity.getActivo())) {
-			log.warn("El usuario {} está inactivo", usuario);
 			return new ResponseEntity<>(
-					Utils.mapearRespuesta("El usuario está inactivo. No se puede recuperar la contraseña.",
+					Utils.mapearRespuesta(ResponseMessages.USER_INVALID,
 							HttpStatus.UNAUTHORIZED.value()),
 					HttpStatus.UNAUTHORIZED);
 		}
@@ -179,11 +169,10 @@ public class UsuarioServiceImpl implements IUsuarioService {
 				+ "<p>Haz clic en el siguiente enlace para definir una nueva contraseña:</p>" + "<p><a href='"
 				+ enlaceRecuperacion + "'>Restablecer contraseña</a></p>";
 
-		emailServiceImpl.sendEmail(usuarioEntity.getUsuario(), "Recuperación de contraseña", mensaje);
-		log.info("Correo de recuperación enviado a {}", usuarioEntity.getUsuario());
+		emailServiceImpl.sendEmail(usuarioEntity.getUsuario(), Constantes.PASSWORD_RECOVER, mensaje);
 
 		return new ResponseEntity<>(
-				Utils.mapearRespuesta("Se ha enviado un correo con las instrucciones para restablecer la contraseña.",
+				Utils.mapearRespuesta(Constantes.EMAIL_USER,
 						HttpStatus.OK.value()),
 				HttpStatus.OK);
 	}
@@ -194,19 +183,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		String nuevaPassword = usuarioDTO.getPassword();
 
 		if (!validarPassword(nuevaPassword)) {
-			log.warn("La nueva contraseña no cumple con los requisitos de seguridad para usuario ID: {}",
-					usuarioDTO.getId());
-			return ResponseEntity.badRequest().body(ResponseDTO.builder().success(false).message(
-					"La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (@#$%^&+=!)")
+			return ResponseEntity.badRequest().body(ResponseDTO.builder().success(false).message(ResponseMessages.SPECIAL_CHARACTERS)
 					.code(HttpStatus.BAD_REQUEST.value()).build());
 		}
 
 		return usuarioRepository.findById(usuarioDTO.getId()).map(usuario -> {
 			if (passwordEncoder.matches(nuevaPassword, usuario.getPassword())) {
-				log.warn("La nueva contraseña no puede ser igual a la actual para usuario ID: {}", usuarioDTO.getId());
 				return ResponseEntity.badRequest()
 						.body(ResponseDTO.builder().success(false)
-								.message("La nueva contraseña debe ser diferente a la actual")
+								.message(ResponseMessages.PASSWORD_DIFFERENT)
 								.code(HttpStatus.BAD_REQUEST.value()).build());
 			}
 
@@ -214,13 +199,11 @@ public class UsuarioServiceImpl implements IUsuarioService {
 			usuario.setFechaModificacion(new Date());
 			usuarioRepository.save(usuario);
 
-			log.info("Contraseña actualizada correctamente para usuario ID: {}", usuarioDTO.getId());
-			return ResponseEntity.ok(ResponseDTO.builder().success(true).message("Contraseña actualizada correctamente")
+			return ResponseEntity.ok(ResponseDTO.builder().success(true).message(ResponseMessages.PASSWORD_SUCCESSFULLY)
 					.code(HttpStatus.OK.value()).build());
 		}).orElseGet(() -> {
-			log.error("Usuario no encontrado con ID: {}", usuarioDTO.getId());
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder().success(false)
-					.message("Usuario no encontrado").code(HttpStatus.NOT_FOUND.value()).build());
+					.message(Constantes.USER_NOT_FOUND).code(HttpStatus.NOT_FOUND.value()).build());
 		});
 	}
 }

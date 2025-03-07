@@ -39,3 +39,4 @@ jwt:
 app:
   url:
     reset-password: http://localhost:8080/reset-password
+	
