@@ -2,6 +2,7 @@ package com.gestion.plus.api.controller;
 
 import java.util.Optional;
 
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -94,63 +94,70 @@ public class UsuarioController {
 		return response;
 	}
 
-	@Operation(summary = "Operación que permite resetear la contraseña del usuario", description = "Permite a un usuario cambiar su contraseña utilizando un token válido.")
+	@Operation(summary = "Operación que permite crear la contraseña del usuario", 
+	           description = "Permite a un usuario cambiar su contraseña utilizando un token válido.")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Contraseña actualizada correctamente", content = {
-					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
-			@ApiResponse(responseCode = "400", description = "Token inválido o expirado", content = {
-					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }), })
+	        @ApiResponse(responseCode = "200", description = "Contraseña actualizada correctamente", content = {
+	                @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
+	        @ApiResponse(responseCode = "400", description = "Token inválido o expirado", content = {
+	                @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }), })
 	@PostMapping("/reset-password")
 	public ResponseEntity<ResponseDTO> resetPassword(
-			@Parameter(description = "Token de autenticación para resetear la contraseña") @RequestParam String llave,
-			@Valid @RequestBody UsuarioEntity usuarioEntity) {
+	        @Parameter(description = "Token de autenticación para resetear la contraseña") 
+	        @RequestParam String llave,
+	        @RequestBody Map<String, String> requestBody) {
 
-		Optional<VigenciaUsuarioEntity> optionalVigencia = vigenciaUsuarioRepository.findByLlave(llave);
+	    String newPassword = requestBody.get("password");
 
-		if (optionalVigencia.isEmpty()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(new ResponseDTO(false, "Token inválido", HttpStatus.BAD_REQUEST.value(), null));
-		}
+	    Optional<VigenciaUsuarioEntity> optionalVigencia = vigenciaUsuarioRepository.findByLlave(llave);
 
-		VigenciaUsuarioEntity vigencia = optionalVigencia.get();
+	    if (optionalVigencia.isEmpty()) {
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+	                .body(new ResponseDTO(false, "Token inválido", HttpStatus.BAD_REQUEST.value(), null));
+	    }
 
-		if (!vigencia.isTokenVigente()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(new ResponseDTO(false, "Token expirado", HttpStatus.BAD_REQUEST.value(), null));
-		}
+	    VigenciaUsuarioEntity vigencia = optionalVigencia.get();
 
-		Optional<UsuarioEntity> usuarioExistente = usuarioRepository.findById(usuarioEntity.getId());
+	    if (!vigencia.isTokenVigente()) {
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+	                .body(new ResponseDTO(false, "Token expirado", HttpStatus.BAD_REQUEST.value(), null));
+	    }
 
-		if (usuarioExistente.isEmpty()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(new ResponseDTO(false, "Usuario no encontrado", HttpStatus.BAD_REQUEST.value(), null));
-		}
+	    Optional<UsuarioEntity> usuarioExistente = usuarioRepository.findById(vigencia.getUsuario().getId());
 
-		UsuarioEntity usuario = usuarioExistente.get();
+	    if (usuarioExistente.isEmpty()) {
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+	                .body(new ResponseDTO(false, "Usuario no encontrado", HttpStatus.BAD_REQUEST.value(), null));
+	    }
 
-		if (!Boolean.TRUE.equals(usuario.getActivo())) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(new ResponseDTO(false, "Usuario inactivo", HttpStatus.BAD_REQUEST.value(), null));
-		}
+	    UsuarioEntity usuario = usuarioExistente.get();
 
-		if (!validarPassword(usuarioEntity.getPassword())) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO(false,
-					"Contraseña no cumple con los requisitos", HttpStatus.BAD_REQUEST.value(), null));
-		}
+	    if (!Boolean.TRUE.equals(usuario.getActivo())) {
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+	                .body(new ResponseDTO(false, "Usuario inactivo", HttpStatus.BAD_REQUEST.value(), null));
+	    }
 
-		usuario.setPassword(passwordEncoder.encode(usuarioEntity.getPassword()));
-		usuarioRepository.save(usuario);
+	    if (!validarPassword(newPassword)) {
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO(false,
+	                "Contraseña no cumple con los requisitos", HttpStatus.BAD_REQUEST.value(), null));
+	    }
 
-		vigencia.setActivo(false);
-		vigenciaUsuarioRepository.save(vigencia);
+	    usuario.setPassword(passwordEncoder.encode(newPassword));
+	    usuarioRepository.save(usuario);
 
-		return ResponseEntity
-				.ok(new ResponseDTO(true, "Contraseña actualizada correctamente", HttpStatus.OK.value(), null));
+	    vigencia.setActivo(false);
+	    vigenciaUsuarioRepository.save(vigencia);
+
+	    return ResponseEntity
+	            .ok(new ResponseDTO(true, "Contraseña actualizada correctamente", HttpStatus.OK.value(), null));
 	}
 
 	private boolean validarPassword(String password) {
-		return password != null && password.length() >= 8 && password.matches(".*[A-Z].*")
-				&& password.matches(".*[a-z].*") && password.matches(".*\\d.*") && password.matches(".*[@#$%^&+=!].*");
+	    return password != null && password.length() >= 8 
+	            && password.matches(".*[A-Z].*")
+	            && password.matches(".*[a-z].*") 
+	            && password.matches(".*\\d.*") 
+	            && password.matches(".*[@#$%^&+=!].*");
 	}
 
 	@Operation(summary = "Operación que permite actualizar la contraseña de usuario")

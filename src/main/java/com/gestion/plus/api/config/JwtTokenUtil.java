@@ -83,6 +83,7 @@ public class JwtTokenUtil implements Serializable {
     }
     
     
+    
     public void invalidateToken(String token) {
         invalidatedTokens.add(token);
     }
