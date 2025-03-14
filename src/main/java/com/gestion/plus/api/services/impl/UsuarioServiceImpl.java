@@ -64,8 +64,6 @@ public class UsuarioServiceImpl implements IUsuarioService {
 	}
 
 	public ResponseEntity<ResponseDTO> updatePassword(String token, UsuarioDTO usuarioDTO) {
-		log.info("Inicio método actualizar contraseña con token para usuario ID: {}", usuarioDTO.getId());
-
 		if (token == null || token.trim().isEmpty()) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ResponseDTO.builder().success(false)
 					.message(ResponseMessages.TOKEN_REQUIRED).code(HttpStatus.UNAUTHORIZED.value()).build());
@@ -135,7 +133,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 	}
 
 	public ResponseEntity<ResponseDTO> recoverPassword(String usuario) {
-		log.info("Inicio método recuperarPassword para el usuario: {}", usuario);
+		log.info("Inicio método crear Password para el usuario: {}", usuario);
 
 		if (usuario == null || usuario.isEmpty()) {
 			return new ResponseEntity<>(
@@ -162,7 +160,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		UserDetails userDetails = new User(usuarioEntity.getUsuario(), usuarioEntity.getPassword(), new ArrayList<>());
 		String tokenRecuperacion = jwtTokenUtil.generateToken(userDetails);
 
-		String enlaceRecuperacion = "http://localhost:8080/api/v1/Usuario/password?token=" + tokenRecuperacion;
+		String enlaceRecuperacion = "http://localhost:4200/password?token=" + tokenRecuperacion;
 
 		String mensaje = "<p><strong>¿Olvidaste tu contraseña?</strong></p>"
 				+ "<p>Recibimos una solicitud para restablecer tu contraseña.</p>"

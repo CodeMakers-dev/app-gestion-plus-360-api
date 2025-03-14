@@ -38,5 +38,4 @@ jwt:
   secret: L5u9mC4Qp7FJ8rXz2VpYhTtNbKwA1gD0sO3fG6ZRMIlEjcYdPoUWxvqBaHN7SKCaMnuELmasdjUENNAJSN
 app:
   url:
-    reset-password: http://localhost:8080/reset-password
-	
+    reset-password: http://localhost:4200/create-password
