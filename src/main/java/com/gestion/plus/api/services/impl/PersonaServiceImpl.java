@@ -250,4 +250,42 @@ public class PersonaServiceImpl implements IPersonaService {
 					.body(new ResponseDTO(false, "Error al bloquear persona", HttpStatus.BAD_REQUEST.value(), null));
 		}
 	}
+	
+	public ResponseEntity<ResponseDTO> updateImagenPersona(Integer id, byte[] imagen) {
+        log.info("Inicio método actualizar imagen de Persona con ID: {}", id);
+
+        try {
+            Optional<PersonaEntity> personaOpt = personaRepository.findById(id);
+
+            if (personaOpt.isEmpty()) {
+                log.warn("No se encontró la persona con ID: {}", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseDTO.builder()
+                                .success(false)
+                                .message("Persona no encontrada")
+                                .code(HttpStatus.NOT_FOUND.value())
+                                .build());
+            }
+
+            PersonaEntity persona = personaOpt.get();
+            persona.setImagen(imagen);
+            personaRepository.save(persona);
+
+            log.info("Imagen de Persona con ID: {} actualizada correctamente", id);
+            return ResponseEntity.ok(ResponseDTO.builder()
+                    .success(true)
+                    .message("Imagen actualizada correctamente")
+                    .code(HttpStatus.OK.value())
+                    .build());
+
+        } catch (Exception e) {
+            log.error("Error al actualizar la imagen de Persona con ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseDTO.builder()
+                            .success(false)
+                            .message("Error al actualizar la imagen")
+                            .code(HttpStatus.BAD_REQUEST.value())
+                            .build());
+        }
+    }
 }
