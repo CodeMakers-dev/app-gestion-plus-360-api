@@ -1,5 +1,10 @@
 package com.gestion.plus.api.controller;
 
+import java.io.IOException;
+import java.util.Base64;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -11,7 +16,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -119,4 +127,34 @@ public class PersonaController {
 	public ResponseEntity<ResponseDTO> blockPersona(@PathVariable Integer id) {
 		return personaServiceImpl.blockPersona(id);
 	}
+
+	
+	@Operation(summary = "Actualizar la imagen de una persona por ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Imagen actualizada correctamente", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Solicitud incorrecta", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
+            @ApiResponse(responseCode = "404", description = "Persona no encontrada", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) })
+    })
+    @PutMapping(value = "/{id}/imagen", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseDTO> updateImagenPersona(
+            @PathVariable Integer id,
+            @RequestParam("imagen") MultipartFile file) {
+
+        try {
+            byte[] imagenBytes = file.getBytes();
+            return personaServiceImpl.updateImagenPersona(id, imagenBytes);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseDTO.builder()
+                            .success(false)
+                            .message("Error al procesar la imagen")
+                            .code(HttpStatus.BAD_REQUEST.value())
+                            .build());
+        }
+    }
 }

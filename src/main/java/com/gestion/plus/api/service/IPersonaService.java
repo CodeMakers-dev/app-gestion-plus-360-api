@@ -17,5 +17,6 @@ public interface IPersonaService {
 	ResponseEntity<ResponseDTO> updatePersona(Integer Id, PersonaDTO personaDTO);
 	
 	ResponseEntity<ResponseDTO> blockPersona(Integer id);
-
+	
+	ResponseEntity<ResponseDTO> updateImagenPersona(Integer id, byte[] imagen);
 }
