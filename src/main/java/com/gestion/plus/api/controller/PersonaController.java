@@ -1,8 +1,6 @@
 package com.gestion.plus.api.controller;
 
 import java.io.IOException;
-import java.util.Base64;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
