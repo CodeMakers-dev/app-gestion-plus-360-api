@@ -14,7 +14,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -78,34 +81,12 @@ public class MensajeMasivoController {
                 usuario
         );
     }
-
+     
+    @Data
+    @ToString
     static class MensajeMasivoRequest {
         private MensajeMasivoDTO mensajeMasivo;
         private List<ArchivoMensajeDTO> archivos;
         private List<ButtonMensajeDTO> botones;
-
-        public MensajeMasivoDTO getMensajeMasivo() {
-            return mensajeMasivo;
-        }
-
-        public void setMensajeMasivo(MensajeMasivoDTO mensajeMasivo) {
-            this.mensajeMasivo = mensajeMasivo;
-        }
-
-        public List<ArchivoMensajeDTO> getArchivos() {
-            return archivos;
-        }
-
-        public void setArchivos(List<ArchivoMensajeDTO> archivos) {
-            this.archivos = archivos;
-        }
-
-        public List<ButtonMensajeDTO> getBotones() {
-            return botones;
-        }
-
-        public void setBotones(List<ButtonMensajeDTO> botones) {
-            this.botones = botones;
-        }
     }
 }

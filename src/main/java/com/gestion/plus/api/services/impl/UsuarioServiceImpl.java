@@ -1,6 +1,7 @@
 package com.gestion.plus.api.services.impl;
 
 import java.util.ArrayList;
+
 import java.util.Date;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +22,6 @@ import com.gestion.plus.commons.repositories.UsuarioRepository;
 import com.gestion.plus.commons.utils.Constantes;
 import com.gestion.plus.commons.utils.ResponseMessages;
 import com.gestion.plus.commons.utils.Utils;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -203,5 +203,20 @@ public class UsuarioServiceImpl implements IUsuarioService {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder().success(false)
 					.message(Constantes.USER_NOT_FOUND).code(HttpStatus.NOT_FOUND.value()).build());
 		});
+	}
+	
+	public ResponseEntity<ResponseDTO> findAll() {
+		ResponseDTO responseDTO;
+		log.info("Inicio metodo Obtener todos los usuarios");
+		try {
+			responseDTO = ResponseDTO.builder().success(Boolean.valueOf(true)).message(ResponseMessages.CONSULTED_SUCCESSFULLY)
+					.code(Integer.valueOf(HttpStatus.OK.value()))
+					.response(UsuarioMapper.INSTANCE.beanListToDtoList(this.usuarioRepository.findAll())).build();
+		} catch (Exception e) {
+			responseDTO = ResponseDTO.builder().success(Boolean.valueOf(false)).message(ResponseMessages.CONSULTING_ERROR)
+					.code(Integer.valueOf(HttpStatus.BAD_REQUEST.value())).response(ResponseMessages.NO_RECORD_FOUND)
+					.build();
+		}
+		return ResponseEntity.status(responseDTO.getCode().intValue()).body(responseDTO);
 	}
 }
