@@ -12,9 +12,12 @@ import com.gestion.plus.commons.dtos.PersonaDTO;
 import com.gestion.plus.commons.dtos.ResponseDTO;
 import com.gestion.plus.commons.entities.PagosEntity;
 import com.gestion.plus.commons.entities.PersonaEntity;
+import com.gestion.plus.commons.entities.TipoPlanEntity;
 import com.gestion.plus.commons.maps.PagosMapper;
 import com.gestion.plus.commons.maps.PersonaMapper;
 import com.gestion.plus.commons.repositories.PagosRepository;
+import com.gestion.plus.commons.repositories.PersonaRepository;
+import com.gestion.plus.commons.repositories.TipoPlanRepository;
 import com.gestion.plus.commons.utils.ResponseMessages;
 
 import lombok.RequiredArgsConstructor;
@@ -27,26 +30,69 @@ public class PagosServiceImpl implements IPagosService {
 
 	private final PagosRepository pagosRepository;
 
-	public ResponseEntity<ResponseDTO> savePagos(PagosDTO pagosDTO) {
-		log.info("Inicio metodo guardar pago");
+	private final PersonaRepository personaRepository;
+	
+	private final TipoPlanRepository tipoPlanRepository;
 
+	private final EmailServiceImpl emailServiceImpl;
+
+	public ResponseEntity<ResponseDTO> savePagos(PagosDTO pagosDTO) {
+		log.info("Inicio método guardar pago");
 		try {
+			if (pagosDTO.getPersona() != null && pagosDTO.getPersona().getCorreo() == null) {
+				PersonaEntity personaDB = personaRepository.findById(pagosDTO.getPersona().getId()).orElse(null);
+				if (personaDB != null) {
+					pagosDTO.getPersona().setCorreo(personaDB.getCorreo()); 
+				} else {
+					log.warn("No se encontró persona en la BD con ID: {}", pagosDTO.getPersona().getId());
+				}
+			}
 			PagosEntity pagosEntity = PagosMapper.INSTANCE.dtoToEntity(pagosDTO);
 			pagosEntity.setFechaCreacion(new Date());
 			pagosEntity.setActivo(true);
-
+			TipoPlanEntity tipoPlanEntity = tipoPlanRepository.findById(pagosDTO.getTipoPlan().getId()).orElse(null);
+			if (tipoPlanEntity != null) {
+			    pagosDTO.getTipoPlan().setNombre(tipoPlanEntity.getNombre());
+			}
 			PagosEntity savedEntity = pagosRepository.save(pagosEntity);
 			PagosDTO savedDTO = PagosMapper.INSTANCE.entityToDto(savedEntity);
+			
+			String tipoPlanNombre = (savedDTO.getTipoPlan() != null && savedDTO.getTipoPlan().getNombre() != null)
+				    ? savedDTO.getTipoPlan().getNombre()
+				    : "Desconocido";
+			String estadoPago = savedDTO.getActivo() ? "Activo" : "Inactivo";
+			String correoDestinatario = pagosDTO.getPersona() != null ? pagosDTO.getPersona().getCorreo() : null;
+		
+			if (correoDestinatario != null && !correoDestinatario.isEmpty()) {
+				String mensaje = "<div style='text-align: center; padding: 15px; background-color: #6aa84f; color: white; border-radius: 8px;'>"
+				        + "    <span style='font-size: 18px; font-weight: bold;'>Su pago se ha completado correctamente</span>"
+				        + "</div>"
+				        + "<div style='padding: 15px; font-family: Arial, sans-serif;'>"
+				        + "    <p><strong>Tipo de plan:</strong> " + tipoPlanNombre + "</p>"
+				        + "    <p><strong>Valor del pago:</strong> $ " + savedDTO.getValorPago() + "</p>"
+				        + "    <p><strong>Fecha de pago:</strong> " + savedDTO.getFechaPago() + "</p>"
+				        + "    <strong>Vigencia:</strong>" 
+				        + "    <p><strong>Desde: </strong>" + savedDTO.getVigenciaDesde() + "</p>" 
+				        + "    <p><strong>Hasta: </strong>" + savedDTO.getVigenciaHasta() + "</p>" 
+				        + "    <p><strong>Estado:</strong> " + estadoPago + "</p>"
+				        + "</div>";
 
-			log.info("Fin metodo guardar pago");
+				emailServiceImpl.sendEmail(correoDestinatario, "Confirmación de Pago Exitoso", mensaje);
+			} else {
+				log.warn("No se pudo enviar correo de confirmación: el correo de la persona es nulo o vacío.");
+			}
+
+			log.info("Fin método guardar pago");
 
 			ResponseDTO responseDTO = ResponseDTO.builder().success(true).message(ResponseMessages.SAVED_SUCCESSFULLY)
-					.code(201).response(savedDTO).build();
-			return ResponseEntity.status(201).body(responseDTO);
+					.code(HttpStatus.CREATED.value()).response(savedDTO).build();
+
+			return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
 		} catch (Exception e) {
 			ResponseDTO errorResponse = ResponseDTO.builder().success(false).message(ResponseMessages.SAVE_ERROR)
-					.code(400).build();
-			return ResponseEntity.status(400).body(errorResponse);
+					.code(HttpStatus.BAD_REQUEST.value()).build();
+
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 		}
 	}
 
@@ -107,43 +153,47 @@ public class PagosServiceImpl implements IPagosService {
 	}
 
 	public ResponseEntity<ResponseDTO> updatePago(Integer id, PagosDTO pagosDTO) {
-	    log.info("Inicio método actualizar pago con id: {}", id);
+		log.info("Inicio método actualizar pago con id: {}", id);
 
-	    ResponseDTO responseDTO;
-	    PagosEntity existingPago = pagosRepository.findById(id).orElse(null);
+		ResponseDTO responseDTO;
+		PagosEntity existingPago = pagosRepository.findById(id).orElse(null);
 
-	    if (existingPago != null) {
-	        existingPago.setPersona((pagosDTO.getPersona() != null) ? pagosDTO.getPersona() : existingPago.getPersona());
-	        existingPago.setTipoPlan((pagosDTO.getTipoPlan() != null) ? pagosDTO.getTipoPlan() : existingPago.getTipoPlan());
-	        existingPago.setOrigenPago((pagosDTO.getOrigenPago() != null) ? pagosDTO.getOrigenPago() : existingPago.getOrigenPago());
-	        existingPago.setDestinoPago((pagosDTO.getDestinoPago() != null) ? pagosDTO.getDestinoPago() : existingPago.getDestinoPago());
-	        existingPago.setValorPago((pagosDTO.getValorPago() != null) ? pagosDTO.getValorPago() : existingPago.getValorPago());
-	        existingPago.setReferencia((pagosDTO.getReferencia() != null) ? pagosDTO.getReferencia() : existingPago.getReferencia());
-	        existingPago.setFechaPago((pagosDTO.getFechaPago() != null) ? pagosDTO.getFechaPago() : existingPago.getFechaPago());
-	        existingPago.setVigenciaDesde((pagosDTO.getVigenciaDesde() != null) ? pagosDTO.getVigenciaDesde() : existingPago.getVigenciaDesde());
-	        existingPago.setVigenciaHasta((pagosDTO.getVigenciaHasta() != null) ? pagosDTO.getVigenciaHasta() : existingPago.getVigenciaHasta());
-	        existingPago.setDiasVigencia((pagosDTO.getDiasVigencia() != null) ? pagosDTO.getDiasVigencia() : existingPago.getDiasVigencia());
-	        existingPago.setUsuarioModificacion((pagosDTO.getUsuarioModificacion() != null) ? pagosDTO.getUsuarioModificacion() : existingPago.getUsuarioModificacion());
+		if (existingPago != null) {
+			existingPago
+					.setPersona((pagosDTO.getPersona() != null) ? pagosDTO.getPersona() : existingPago.getPersona());
+			existingPago.setTipoPlan(
+					(pagosDTO.getTipoPlan() != null) ? pagosDTO.getTipoPlan() : existingPago.getTipoPlan());
+			existingPago.setOrigenPago(
+					(pagosDTO.getOrigenPago() != null) ? pagosDTO.getOrigenPago() : existingPago.getOrigenPago());
+			existingPago.setDestinoPago(
+					(pagosDTO.getDestinoPago() != null) ? pagosDTO.getDestinoPago() : existingPago.getDestinoPago());
+			existingPago.setValorPago(
+					(pagosDTO.getValorPago() != null) ? pagosDTO.getValorPago() : existingPago.getValorPago());
+			existingPago.setReferencia(
+					(pagosDTO.getReferencia() != null) ? pagosDTO.getReferencia() : existingPago.getReferencia());
+			existingPago.setFechaPago(
+					(pagosDTO.getFechaPago() != null) ? pagosDTO.getFechaPago() : existingPago.getFechaPago());
+			existingPago.setVigenciaDesde((pagosDTO.getVigenciaDesde() != null) ? pagosDTO.getVigenciaDesde()
+					: existingPago.getVigenciaDesde());
+			existingPago.setVigenciaHasta((pagosDTO.getVigenciaHasta() != null) ? pagosDTO.getVigenciaHasta()
+					: existingPago.getVigenciaHasta());
+			existingPago.setDiasVigencia(
+					(pagosDTO.getDiasVigencia() != null) ? pagosDTO.getDiasVigencia() : existingPago.getDiasVigencia());
+			existingPago.setUsuarioModificacion(
+					(pagosDTO.getUsuarioModificacion() != null) ? pagosDTO.getUsuarioModificacion()
+							: existingPago.getUsuarioModificacion());
 
-	        existingPago.setFechaModificacion(new Date());
+			existingPago.setFechaModificacion(new Date());
 
-	        PagosDTO updatedDTO = PagosMapper.INSTANCE.entityToDto(pagosRepository.save(existingPago));
+			PagosDTO updatedDTO = PagosMapper.INSTANCE.entityToDto(pagosRepository.save(existingPago));
 
-	        responseDTO = ResponseDTO.builder()
-	                .success(true)
-	                .message(ResponseMessages.UPDATED_SUCCESSFULLY)
-	                .code(HttpStatus.OK.value())
-	                .response(updatedDTO)
-	                .build();
-	    } else {
-	        responseDTO = ResponseDTO.builder()
-	                .success(false)
-	                .message(ResponseMessages.UPDATE_ERROR)
-	                .code(HttpStatus.NOT_FOUND.value())
-	                .response(HttpStatus.NOT_FOUND)
-	                .build();
-	    }
+			responseDTO = ResponseDTO.builder().success(true).message(ResponseMessages.UPDATED_SUCCESSFULLY)
+					.code(HttpStatus.OK.value()).response(updatedDTO).build();
+		} else {
+			responseDTO = ResponseDTO.builder().success(false).message(ResponseMessages.UPDATE_ERROR)
+					.code(HttpStatus.NOT_FOUND.value()).response(HttpStatus.NOT_FOUND).build();
+		}
 
-	    return ResponseEntity.status(responseDTO.getCode()).body(responseDTO);
+		return ResponseEntity.status(responseDTO.getCode()).body(responseDTO);
 	}
 }

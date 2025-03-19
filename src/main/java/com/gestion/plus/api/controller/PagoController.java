@@ -44,10 +44,10 @@ public class PagoController {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
 			@ApiResponse(responseCode = "500", description = "Se presento una condición inesperada que impidió completar la petición", content = {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }), })
-	@PostMapping
-	public ResponseEntity<ResponseDTO> savePagos(@RequestBody PagosDTO pagosDTO) {
-		return this.pagosServiceImpl.savePagos(pagosDTO);
-	}
+	  @PostMapping
+	    public ResponseEntity<ResponseDTO> savePagos(@RequestBody PagosDTO pagosDTO) {
+	        return pagosServiceImpl.savePagos(pagosDTO);
+	    }
 
 	@Operation(summary = "Operacion que permite consultar pago por id persona")
 	@ApiResponses(value = {
