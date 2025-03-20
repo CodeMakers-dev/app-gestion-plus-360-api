@@ -1,6 +1,7 @@
 package com.gestion.plus.api.services.impl;
 
 import java.util.Date;
+
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
@@ -120,7 +121,20 @@ public class PagosServiceImpl implements IPagosService {
 					ResponseDTO.builder().success(false).message(ResponseMessages.CONSULTING_ERROR).code(500).build());
 		}
 	}
-
+	public ResponseEntity<ResponseDTO> findPagosById(Integer id) {
+		ResponseDTO responseDTO;
+		log.info("Inicio del metodo para obtener pago por id");
+		Optional<PagosEntity> pagosOptional = this.pagosRepository.findById(id);
+		if (pagosOptional.isPresent()) {
+			PagosDTO pagosDTO = PagosMapper.INSTANCE.entityToDto(pagosOptional.get());
+			responseDTO = ResponseDTO.builder().success(Boolean.valueOf(true)).message(ResponseMessages.CONSULTED_SUCCESSFULLY)
+					.code(Integer.valueOf(HttpStatus.OK.value())).response(pagosDTO).build();
+		} else {
+			responseDTO = ResponseDTO.builder().code(Integer.valueOf(HttpStatus.NOT_FOUND.value()))
+					.message("pago no encontrado para el Id: " + id).response(null).build();
+		}
+		return ResponseEntity.status(responseDTO.getCode().intValue()).body(responseDTO);
+	}
 	public ResponseEntity<ResponseDTO> findAll() {
 		ResponseDTO responseDTO;
 		log.info("Inicio metodo Obtener todos los pagos");
