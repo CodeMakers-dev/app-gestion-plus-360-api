@@ -20,34 +20,60 @@ import com.gestion.plus.commons.repositories.MensajeRepository;
 import com.gestion.plus.commons.repositories.UsuarioRepository;
 import com.gestion.plus.commons.utils.Constantes;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MensajeServiceImpl implements IMensajeService{
 	
+	@PersistenceContext
+    private EntityManager entityManager;
+	
 	private final MensajeRepository mensajeRepository;
 	
     private final UsuarioRepository usuarioRepository;
     
     @Override
+    @Transactional
     public ResponseEntity<ResponseDTO> sendMensaje(MensajeDTO mensajeDTO) {
         log.info("Inicio método enviar mensaje");
         try {
             Optional<UsuarioEntity> usuarioOpt = usuarioRepository.findById(mensajeDTO.getUsuario().getId());
 
             if (usuarioOpt.isPresent()) {
-                MensajeEntity mensajeEntity = MensajeMapper.INSTANCE.dtoToEntity(mensajeDTO);
-                mensajeEntity.setUsuario(usuarioOpt.get());
-                mensajeEntity.setFechaEnvio(new Date());
-                mensajeEntity.setFechaCreacion(new Date());
-                mensajeEntity.setActivo(true);
+                MensajeEntity mensajeEntity;
+                if (mensajeDTO.getId() != null) {
+                    mensajeEntity = entityManager.find(MensajeEntity.class, mensajeDTO.getId());
+                    if (mensajeEntity != null) {
+                        mensajeEntity.setActivo(mensajeDTO.getActivo());
+                        mensajeEntity.setTitulo(mensajeDTO.getTitulo());
+                        mensajeEntity.setDescripcion(mensajeDTO.getDescripcion());
+                        mensajeEntity.setUsuario(usuarioOpt.get());
+                        mensajeEntity.setFechaEnvio(new Date());
+                        mensajeEntity = entityManager.merge(mensajeEntity);
+                    } else {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ResponseDTO.builder()
+                                        .success(false)
+                                        .message("Mensaje no encontrado")
+                                        .code(HttpStatus.NOT_FOUND.value())
+                                        .build());
+                    }
+                } else {
+                    mensajeEntity = MensajeMapper.INSTANCE.dtoToEntity(mensajeDTO);
+                    mensajeEntity.setUsuario(usuarioOpt.get());
+                    mensajeEntity.setFechaEnvio(new Date());
+                    mensajeEntity.setFechaCreacion(new Date());
+                    mensajeEntity = mensajeRepository.save(mensajeEntity);
+                }
 
-                MensajeEntity mensajeGuardado = mensajeRepository.save(mensajeEntity);
-                MensajeDTO mensajeResponseDTO = MensajeMapper.INSTANCE.entityToDto(mensajeGuardado);
+                MensajeDTO mensajeResponseDTO = MensajeMapper.INSTANCE.entityToDto(mensajeEntity);
 
                 log.info("Mensaje enviado con éxito");
                 ResponseDTO responseDTO = ResponseDTO.builder()
