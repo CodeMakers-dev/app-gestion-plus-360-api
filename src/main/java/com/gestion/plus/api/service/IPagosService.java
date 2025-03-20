@@ -18,4 +18,6 @@ public interface IPagosService {
 	ResponseEntity<ResponseDTO> deletePago(Integer Id);
 
 	ResponseEntity<ResponseDTO> updatePago(Integer Id, PagosDTO pagosDTO);
+	
+	ResponseEntity<ResponseDTO> findPagosById(Integer Id);
 }

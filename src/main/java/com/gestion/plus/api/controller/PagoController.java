@@ -65,6 +65,21 @@ public class PagoController {
 		personaDTO.setId(id);
 		return pagosServiceImpl.getPagoByIdPersona(personaDTO);
 	}
+	
+	@Operation(summary = "Operacion que permite consultar un canal a partir de un id")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Se consulta exitosamente", content = {
+					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
+			@ApiResponse(responseCode = "400", description = "La petición no puede ser entendida por el servidor debido a errores de sintaxis, el cliente no debe repetirla no sin antes hacer modificaciones", content = {
+					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
+			@ApiResponse(responseCode = "404", description = "El recurso solicitado no puede ser encontrado", content = {
+					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
+			@ApiResponse(responseCode = "500", description = "Se presento una condición inesperada que impidió completar la petición", content = {
+					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }), })
+  @GetMapping({"/unique/{id}"})
+  public ResponseEntity<ResponseDTO> getPagosId(@PathVariable Integer id) {
+    return this.pagosServiceImpl.findPagosById(id);
+  }
 
 	@Operation(summary = "Operacion que permite consultar los pagos")
 	@ApiResponses(value = {
@@ -91,7 +106,7 @@ public class PagoController {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
 			@ApiResponse(responseCode = "500", description = "Se presento una condición inesperada que impidió completar la petición", content = {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }), })
-	@DeleteMapping({ "/{id}" })
+	@DeleteMapping({ "/delete/{id}" })
 	public ResponseEntity<ResponseDTO> deletePago(@PathVariable Integer id) {
 		return this.pagosServiceImpl.deletePago(id);
 	}
@@ -106,7 +121,7 @@ public class PagoController {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
 			@ApiResponse(responseCode = "500", description = "Se presento una condición inesperada que impidió completar la petición", content = {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }), })
-	  @PutMapping("/{id}")
+	  @PutMapping("/update/{id}")
     public ResponseEntity<ResponseDTO> updatePago(@PathVariable Integer id, @RequestBody PagosDTO pagosDTO) {
         return this.pagosServiceImpl.updatePago(id, pagosDTO);
     }
