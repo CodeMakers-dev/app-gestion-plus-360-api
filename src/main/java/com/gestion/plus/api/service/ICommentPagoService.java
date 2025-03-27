@@ -10,4 +10,6 @@ public interface ICommentPagoService {
 	ResponseEntity<ResponseDTO> saveComentario(CommentPagoDTO commentPagoDTO);
 	
 	ResponseEntity<ResponseDTO> findComentarioById(Integer idPago);
+	
+	ResponseEntity<ResponseDTO> deleteComentario(Integer Id);
 }

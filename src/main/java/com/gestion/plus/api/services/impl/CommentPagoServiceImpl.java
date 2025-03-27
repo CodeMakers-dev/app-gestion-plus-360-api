@@ -26,18 +26,17 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CommentPagoServiceImpl  implements ICommentPagoService{
-	
+public class CommentPagoServiceImpl implements ICommentPagoService {
+
 	private final CommentPagoRepository commentPagoRepository;
 
 	private final PagosRepository pagosRepository;
-	
+
 	public ResponseEntity<ResponseDTO> saveComentario(CommentPagoDTO commentPagoDTO) {
 		log.info("Inicio metodo guardar comentario de pago");
 		try {
 			ResponseDTO responseDTO;
-			Optional<PagosEntity> pagoOptional = this.pagosRepository
-					.findById(commentPagoDTO.getPagos().getId());
+			Optional<PagosEntity> pagoOptional = this.pagosRepository.findById(commentPagoDTO.getPagos().getId());
 			if (pagoOptional.isPresent()) {
 				CommentPagoEntity savedComentario = (CommentPagoEntity) this.commentPagoRepository
 						.save(CommentPagoMapper.INSTANCE.dtoToEntity(commentPagoDTO));
@@ -59,29 +58,36 @@ public class CommentPagoServiceImpl  implements ICommentPagoService{
 			return ResponseEntity.status(responseDTO.getCode().intValue()).body(responseDTO);
 		}
 	}
-	
 
-    public ResponseEntity<ResponseDTO> findComentarioById(Integer idPago) {
-        log.info("Inicio método obtener comentarios por ID de pago");
+	public ResponseEntity<ResponseDTO> findComentarioById(Integer idPago) {
+		log.info("Inicio método obtener comentarios por ID de pago");
 
-        Optional<PagosEntity> pagosOpt = pagosRepository.findById(idPago);
-        if (pagosOpt.isPresent()) {
-            List<CommentPagoEntity> comentarios = commentPagoRepository.findByPagos(pagosOpt.get());
-            List<CommentPagoDTO> commentPagoDTO = CommentPagoMapper.INSTANCE.beanListToDtoList(comentarios);
+		Optional<PagosEntity> pagosOpt = pagosRepository.findById(idPago);
+		if (pagosOpt.isPresent()) {
+			List<CommentPagoEntity> comentarios = commentPagoRepository.findByPagos(pagosOpt.get());
+			List<CommentPagoDTO> commentPagoDTO = CommentPagoMapper.INSTANCE.beanListToDtoList(comentarios);
 
-            return ResponseEntity.ok(ResponseDTO.builder()
-                    .success(true)
-                    .message(Constantes.COMMENT_FOUND)
-                    .code(HttpStatus.OK.value())
-                    .response(commentPagoDTO)
-                    .build());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ResponseDTO.builder()
-                            .success(false)
-                            .message(Constantes.PAY_NOT_FOUND)
-                            .code(HttpStatus.NOT_FOUND.value())
-                            .build());
-        }
-    }
+			return ResponseEntity.ok(ResponseDTO.builder().success(true).message(Constantes.COMMENT_FOUND)
+					.code(HttpStatus.OK.value()).response(commentPagoDTO).build());
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder().success(false)
+					.message(Constantes.PAY_NOT_FOUND).code(HttpStatus.NOT_FOUND.value()).build());
+		}
+	}
+	public ResponseEntity<ResponseDTO> deleteComentario(Integer id) {
+		try {
+			log.info("Inicio metodo eliminar comentario por id");
+			this.commentPagoRepository.deleteById(id);
+			ResponseDTO responseDTO = ResponseDTO.builder().success(Boolean.valueOf(true))
+					.message(ResponseMessages.DELETED_SUCCESSFULLY).code(Integer.valueOf(HttpStatus.OK.value()))
+					.response(HttpStatus.OK).build();
+			return ResponseEntity.status(responseDTO.getCode().intValue()).body(responseDTO);
+		} catch (Exception e) {
+			ResponseDTO responseDTO = ResponseDTO.builder().success(Boolean.valueOf(false))
+					.message(ResponseMessages.DELETE_ERROR)
+					.code(Integer.valueOf(HttpStatus.NOT_FOUND.value()))
+					.response("comentario no encontrado para el Id: " + id).build();
+			return ResponseEntity.status(responseDTO.getCode().intValue()).body(responseDTO);
+		}
+	}
 }
