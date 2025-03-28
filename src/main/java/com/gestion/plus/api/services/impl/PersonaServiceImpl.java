@@ -74,7 +74,42 @@ public class PersonaServiceImpl implements IPersonaService {
 			vigenciaUsuarioRepository.save(vigencia);
 
 			String resetLink = resetPasswordUrl + "?llave=" + llave;
-			String mensaje = "Para crear tu contraseña, haz clic en el siguiente enlace: " + resetLink;
+			String mensaje = "<!DOCTYPE html>" +
+				    "<html>" +
+				    "<head>" +
+				    "<style>" +
+				    "body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center; }" +
+				    ".container { background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); max-width: 500px; margin: auto; padding: 20px; }" +
+				    ".logo { width: 150px; margin-bottom: 20px; }" +
+				    "h2 { color: #333333; font-size: 20px; }" +
+				    "p { font-size: 16px; color: #666666; line-height: 1.5; }" +
+				    "a { display: inline-block; padding: 10px 20px; margin-top: 10px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; }" +
+				    "a:hover { background-color: #0056b3; }" +
+				    ".link-container { margin-top: 10px; font-size: 14px; word-wrap: break-word; }" +
+				    ".footer { margin-top: 20px; font-size: 14px; color: #888888; }" +
+				    "</style>" +
+				    "</head>" +
+				    "<body>" +
+				    "<div class='container'>" +
+				    "<img src='https://lh3.googleusercontent.com/a/ACg8ocI8YnNsVJjvY_A40BjiJJN9OxiDpCvbC-TpHDfYO_cC_u59P9c=s288-c-no' alt='Logo' class='logo'>" +  // Reemplaza con tu logo
+				    "<h2>Bienvenido</h2>" +
+				    "<p>Para completar tu registro, necesitas crear tu contraseña.</p>" +
+				    "<p>Haz clic en el siguiente enlace para configurar tu contraseña:</p>" +
+				    "<a href='" + resetLink + "'>Crear contraseña</a>" +
+				    "<div class='link-container'>" +
+				    "<p>Si el enlace no funciona, copia y pega la siguiente URL en tu navegador:</p>" +
+				    "<li href='" + resetLink + "'>" + resetLink + "</li>" +
+				    "</div>" +
+				    "<p>Por tu seguridad, tu contraseña debe cumplir estos requisitos:</p>" +
+				    "<ul style='text-align: left; display: inline-block; margin-top: 10px;'>" +
+				    "<li>Debe tener al menos 8 caracteres.</li>" +
+				    "<li>No debe contener tu nombre, apellido o fecha de nacimiento.</li>" +
+				    "<li>No puede ser igual a la respuesta de seguridad.</li>" +
+				    "</ul>" +
+				    "<p class='footer'>Equipo de Soporte</p>" +
+				    "</div>" +
+				    "</body>" +
+				    "</html>";
 			emailServiceImpl.sendEmail(personaDTO.getCorreo(), "Activación de Cuenta", mensaje);
 
 			log.info("Fin del metodo guardar persona");
