@@ -13,17 +13,22 @@ import org.springframework.stereotype.Service;
 import com.gestion.plus.api.service.IPersonaService;
 import com.gestion.plus.commons.dtos.PersonaDTO;
 import com.gestion.plus.commons.dtos.ResponseDTO;
+import com.gestion.plus.commons.dtos.RolDTO;
 import com.gestion.plus.commons.entities.CiudadEntity;
 import com.gestion.plus.commons.entities.DepartamentoEntity;
 import com.gestion.plus.commons.entities.PaisEntity;
 import com.gestion.plus.commons.entities.PersonaEntity;
+import com.gestion.plus.commons.entities.RolEntity;
 import com.gestion.plus.commons.entities.TipoDocumentoEntity;
 import com.gestion.plus.commons.entities.UsuarioEntity;
+import com.gestion.plus.commons.entities.UsuarioRolEntity;
 import com.gestion.plus.commons.entities.VigenciaUsuarioEntity;
 import com.gestion.plus.commons.maps.PersonaMapper;
 import com.gestion.plus.commons.repositories.MensajeRepository;
 import com.gestion.plus.commons.repositories.PersonaRepository;
+import com.gestion.plus.commons.repositories.RolRepository;
 import com.gestion.plus.commons.repositories.UsuarioRepository;
+import com.gestion.plus.commons.repositories.UsuarioRolRepository;
 import com.gestion.plus.commons.repositories.VigenciaUsuarioRepository;
 import com.gestion.plus.commons.utils.ResponseMessages;
 
@@ -41,6 +46,8 @@ public class PersonaServiceImpl implements IPersonaService {
 	private final VigenciaUsuarioRepository vigenciaUsuarioRepository;
 	private final EmailServiceImpl emailServiceImpl;
 	private final MensajeRepository mensajeRepository;
+	private final RolRepository rolRepository;
+	private final UsuarioRolRepository usuarioRolRepository;
 
 	@Value("${app.url.reset-password}")
 	private String resetPasswordUrl;
@@ -53,13 +60,25 @@ public class PersonaServiceImpl implements IPersonaService {
 			personaEntity.setFechaCreacion(new Date());
 			personaEntity.setActivo(true);
 			PersonaEntity savedEntity = personaRepository.save(personaEntity);
+			
 			UsuarioEntity usuario = new UsuarioEntity();
 			usuario.setUsuario(personaDTO.getCorreo());
 			usuario.setPersona(savedEntity);
 			usuario.setActivo(true);
 			usuario.setFechaCreacion(new Date());
 			usuario.setUsuarioCreacion("Sistema");
+			
+			if (personaDTO.getRol() != null) {
+			    Integer rolId = personaDTO.getRol().getId();
+			    RolEntity rol = rolRepository.findById(rolId) 
+			        .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+			    usuario.setRol(rol);
+			} else {
+			    throw new RuntimeException("El ID del rol es obligatorio");
+			}
+
 			usuarioRepository.save(usuario);
+	       
 
 			String llave = UUID.randomUUID().toString();
 			Date fechaExpiracion = new Date(System.currentTimeMillis() + (5 * 24 * 60 * 60 * 1000));
