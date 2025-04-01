@@ -253,7 +253,7 @@ public class PersonaServiceImpl implements IPersonaService {
 			});
 			personaRepository.delete(personaEntity);
 
-			log.info("Persona y usuario eliminados correctamente");
+			log.info("Persona y usuario eliminados correctamente.");
 
 			return ResponseEntity
 					.ok(new ResponseDTO(true, "Persona eliminada correctamente", HttpStatus.OK.value(), null));
