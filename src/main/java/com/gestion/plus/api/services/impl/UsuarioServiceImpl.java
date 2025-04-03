@@ -219,4 +219,26 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		}
 		return ResponseEntity.status(responseDTO.getCode().intValue()).body(responseDTO);
 	}
+	
+	public ResponseEntity<ResponseDTO> findUsuarioByPersonaId(Integer personaId) {
+        log.info("Inicio del metodo para obtener el Usuario por ID de Persona");
+        Optional<UsuarioEntity> usuarioOptional = usuarioRepository.findByPersonaId(personaId);
+        if (usuarioOptional.isPresent()) {
+            UsuarioDTO usuarioDTO = UsuarioMapper.INSTANCE.entityToDto(usuarioOptional.get());
+            ResponseDTO responseDTO = ResponseDTO.builder()
+                    .success(Boolean.TRUE)
+                    .message(ResponseMessages.CONSULTED_SUCCESSFULLY)
+                    .code(HttpStatus.OK.value())
+                    .response(usuarioDTO)
+                    .build();
+            return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+        } else {
+            ResponseDTO responseDTO = ResponseDTO.builder()
+                    .success(Boolean.FALSE)
+                    .message("Usuario no encontrado para el ID de Persona: " + personaId)
+                    .code(HttpStatus.NOT_FOUND.value())
+                    .build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseDTO);
+        }
+    }
 }
