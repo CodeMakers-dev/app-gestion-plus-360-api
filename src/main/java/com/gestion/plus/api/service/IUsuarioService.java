@@ -18,5 +18,7 @@ public interface IUsuarioService {
 	ResponseEntity<ResponseDTO> recoverPassword(String usuario);
 	
 	ResponseEntity<ResponseDTO> findAll();
+	
+	ResponseEntity<ResponseDTO> findUsuarioByPersonaId(Integer personaId);
 
 }

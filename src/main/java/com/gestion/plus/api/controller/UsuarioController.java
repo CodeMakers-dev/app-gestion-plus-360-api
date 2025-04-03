@@ -207,6 +207,21 @@ public class UsuarioController {
 	public ResponseEntity<ResponseDTO> getUsuarioId(@PathVariable Integer id) {
 		return this.usuarioServiceImpl.findUsuarioById(id);
 	}
+	
+	@Operation(summary = "Operacion que permite consultar el id de usuario a partir de un id de persona")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Se consulta exitosamente", content = {
+					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
+			@ApiResponse(responseCode = "400", description = "La petición no puede ser entendida por el servidor debido a errores de sintaxis, el cliente no debe repetirla no sin antes hacer modificaciones", content = {
+					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
+			@ApiResponse(responseCode = "404", description = "El recurso solicitado no puede ser encontrado", content = {
+					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }),
+			@ApiResponse(responseCode = "500", description = "Se presento una condición inesperada que impidió completar la petición", content = {
+					@Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDTO.class)) }), })
+	@GetMapping("persona/{personaId}")
+    public ResponseEntity<ResponseDTO> obtenerUsuarioPorPersonaId(@PathVariable Integer personaId) {
+        return usuarioServiceImpl.findUsuarioByPersonaId(personaId);
+    }
 
 	@Operation(summary = "Operación que permite recuperar la contraseña de un usuario")
 	@ApiResponses(value = {
