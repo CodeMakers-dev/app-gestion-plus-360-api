@@ -39,3 +39,11 @@ jwt:
 app:
   url:
     reset-password: http://localhost:4200/create-password
+
+whatsapp:
+ api:
+   url: https://graph.facebook.com/v22.0/
+ phone:
+   number-id: 553326667872958
+ access:
+   token: EAAJwJXpBaAsBO6grmB5A0BB18RZA7ZBnPw9puwSbbZCbYeE3wsrQGANsFUVXxl2wzAZC3mJ6Ctd37YfEfyECZCCBRkqVZBB5k1t81qPJgCZC8cuF1p1JHdvBVyfkHBpw5wAHYyzsr2CrZCWJ0J3DthzCbPTh45We4LngtN7NCOaVGyt1ZADkobhjqMDgpXIUmZBwCSEZCn8VqyXvDKw8Gq9hAPqm0V6ZAZBNAYfPid6rZCb2PekCwZD
