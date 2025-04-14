@@ -45,12 +45,12 @@ public class MensajeMasivoServiceImpl implements IMensajeMasivoService {
         log.info("Inicio método guardar mensaje masivo");
 
         try {
-            // 1. Guardar MensajeMasivo
+           
             mensajeMasivoDTO.setUsuario(usuario);
             mensajeMasivoDTO.setUsuarioCreacion(usuario.getUsuarioCreacion());
             mensajeMasivoDTO.setFechaCreacion(new Date());
 
-            // Asegurar que el título y el mensaje estén presentes
+       
             if (mensajeMasivoDTO.getTitulo() == null || mensajeMasivoDTO.getMensaje() == null) {
                 return ResponseEntity.badRequest().body(ResponseDTO.builder()
                         .success(false)
@@ -66,14 +66,13 @@ public class MensajeMasivoServiceImpl implements IMensajeMasivoService {
             MensajeMasivoDTO savedMensajeMasivoDTO = Mappers.getMapper(MensajeMasivoMapper.class)
                     .entityToDto(mensajeMasivoEntity);
 
-            // 2. Guardar Archivos
             if (archivosDTO != null && !archivosDTO.isEmpty()) {
                 for (ArchivoMensajeDTO archivoDTO : archivosDTO) {
                     archivoDTO.setMensajeMasivo(mensajeMasivoEntity);
                     archivoDTO.setUsuarioCreacion(usuario.getUsuarioCreacion());
                     archivoDTO.setFechaCreacion(new Date());
 
-                    // Verificar que el archivo no esté vacío
+ 
                     if (archivoDTO.getArchivo() == null || archivoDTO.getArchivo().length == 0) {
                         return ResponseEntity.badRequest().body(ResponseDTO.builder()
                                 .success(false)
@@ -88,14 +87,14 @@ public class MensajeMasivoServiceImpl implements IMensajeMasivoService {
                 }
             }
 
-            // 3. Guardar Botones
+          
             if (botonesDTO != null && !botonesDTO.isEmpty()) {
                 for (ButtonMensajeDTO botonDTO : botonesDTO) {
                     botonDTO.setMensajeMasivo(mensajeMasivoEntity);
                     botonDTO.setUsuarioCreacion(usuario.getUsuarioCreacion());
                     botonDTO.setFechaCreacion(new Date());
 
-                    // Verificar que el botón no esté vacío
+                  
                     if (botonDTO.getButton() == null || botonDTO.getButton().isEmpty()) {
                         return ResponseEntity.badRequest().body(ResponseDTO.builder()
                                 .success(false)
